@@ -1,0 +1,60 @@
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+-- === CONFIG ===
+local DELAY_AFTER_JOIN = 6
+
+-- Click positions (in order)
+local CLICK_1 = Vector2.new(1113,431)
+local CLICK_2 = Vector2.new(1122, 430)
+local CLICK_3 = Vector2.new(1122, 467)
+local CLICK_4 = Vector2.new(1119, 504)
+local CLICK_5 = Vector2.new(1115, 537)
+local CLICK_6 = Vector2.new(1080, 593)
+
+-- Drag settings (for GUI scrolling)
+local DRAG_START = Vector2.new(1161, 392)
+local DRAG_END   = Vector2.new(1161, 592) -- drag down
+local DRAG_DURATION = 0.5 -- seconds per drag
+
+-- === FUNCTIONS ===
+local function click(pos)
+    VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 0)
+    task.wait()
+    VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 0)
+end
+
+local function drag(startPos, endPos, duration)
+    -- Press and hold at start
+    VirtualInputManager:SendMouseButtonEvent(startPos.X, startPos.Y, 0, true, game, 0)
+
+    -- Smoothly move mouse to endPos
+    local steps = 30
+    for i = 1, steps do
+        local alpha = i / steps
+        local x = startPos.X + (endPos.X - startPos.X) * alpha
+        local y = startPos.Y + (endPos.Y - startPos.Y) * alpha
+        VirtualInputManager:SendMouseMoveEvent(x, y, game)
+        task.wait(duration / steps)
+    end
+
+    -- Release mouse at end
+    VirtualInputManager:SendMouseButtonEvent(endPos.X, endPos.Y, 0, false, game, 0)
+end
+
+-- === EXECUTION ===
+task.wait(DELAY_AFTER_JOIN)
+
+click(CLICK_1)
+click(CLICK_2)
+
+-- Drag GUI to scroll
+drag(DRAG_START, DRAG_END, DRAG_DURATION)
+
+click(CLICK_3)
+click(CLICK_4)
+click(CLICK_5)
+
+-- Drag GUI again if needed
+drag(DRAG_START, DRAG_END, DRAG_DURATION)
+
+click(CLICK_6)
