@@ -1,60 +1,51 @@
+-- ===============================
+-- LOAD SAFETY
+-- ===============================
+repeat task.wait() until game:IsLoaded()
+task.wait(5)
+
+-- ===============================
+-- WIN DETECTOR SCRIPT
+-- ===============================
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
--- === CONFIG ===
-local DELAY_AFTER_JOIN = 6
+local CLICK_1 = Vector2.new(967, 935)
+local CLICK_2 = Vector2.new(901, 356)
 
--- Click positions (in order)
-local CLICK_1 = Vector2.new(1113,431)
-local CLICK_2 = Vector2.new(1122, 430)
-local CLICK_3 = Vector2.new(1122, 467)
-local CLICK_4 = Vector2.new(1119, 504)
-local CLICK_5 = Vector2.new(1115, 537)
-local CLICK_6 = Vector2.new(1080, 593)
+local TRIGGER_TEXT = "HAS WON THE METAL BALL RUN"
+local triggered = false
 
--- Drag settings (for GUI scrolling)
-local DRAG_START = Vector2.new(1161, 392)
-local DRAG_END   = Vector2.new(1161, 592) -- drag down
-local DRAG_DURATION = 0.5 -- seconds per drag
-
--- === FUNCTIONS ===
 local function click(pos)
     VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 0)
     task.wait()
     VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 0)
 end
 
-local function drag(startPos, endPos, duration)
-    -- Press and hold at start
-    VirtualInputManager:SendMouseButtonEvent(startPos.X, startPos.Y, 0, true, game, 0)
+local function checkObject(obj)
+    if triggered then return end
+    if obj:IsA("TextLabel") and obj.Text then
+        if string.find(obj.Text, TRIGGER_TEXT) then
+            triggered = true
+            print("[Metal Ball Run WIN detected]")
 
-    -- Smoothly move mouse to endPos
-    local steps = 30
-    for i = 1, steps do
-        local alpha = i / steps
-        local x = startPos.X + (endPos.X - startPos.X) * alpha
-        local y = startPos.Y + (endPos.Y - startPos.Y) * alpha
-        VirtualInputManager:SendMouseMoveEvent(x, y, game)
-        task.wait(duration / steps)
+            -- Reset character
+            Players.LocalPlayer:LoadCharacter()
+
+            -- Wait for character + UI to stabilize
+            task.wait(5)
+
+            click(CLICK_1)
+            click(CLICK_2)
+        end
     end
-
-    -- Release mouse at end
-    VirtualInputManager:SendMouseButtonEvent(endPos.X, endPos.Y, 0, false, game, 0)
 end
 
--- === EXECUTION ===
-task.wait(DELAY_AFTER_JOIN)
+-- Scan existing UI
+for _, obj in ipairs(CoreGui:GetDescendants()) do
+    checkObject(obj)
+end
 
-click(CLICK_1)
-click(CLICK_2)
-
--- Drag GUI to scroll
-drag(DRAG_START, DRAG_END, DRAG_DURATION)
-
-click(CLICK_3)
-click(CLICK_4)
-click(CLICK_5)
-
--- Drag GUI again if needed
-drag(DRAG_START, DRAG_END, DRAG_DURATION)
-
-click(CLICK_6)
+-- Listen for new UI
+CoreGui.DescendantAdded:Connect(checkObject)
